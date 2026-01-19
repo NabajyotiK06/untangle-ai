@@ -8,7 +8,7 @@ import Pricing from "./pages/Pricing";
 import "./index.css";
 
 // Layout component to wrap Sidebar + Content
-function AppLayout({ children, chats, activeChatId, setActiveChatId, createNewChat, deleteChat, isSidebarOpen, setIsSidebarOpen, user }) {
+function AppLayout({ children, chats, activeChatId, setActiveChatId, createNewChat, deleteChat, isSidebarOpen, setIsSidebarOpen, user, onLogout }) {
   return (
     <div className="app-layout">
       <Sidebar
@@ -20,6 +20,7 @@ function AppLayout({ children, chats, activeChatId, setActiveChatId, createNewCh
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         onDeleteChat={deleteChat}
         user={user}
+        onLogout={onLogout}
       />
 
       <div className={`main-content ${isSidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
@@ -58,6 +59,12 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("untangle_chats", JSON.stringify(chats));
   }, [chats]);
+
+  // Logout Handler
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("untangle_user");
+  };
 
   const handleChatUpdate = (newData) => {
     if (!activeChatId) {
@@ -117,6 +124,7 @@ export default function App() {
             isSidebarOpen={isSidebarOpen}
             setIsSidebarOpen={setIsSidebarOpen}
             user={user}
+            onLogout={handleLogout}
           >
             <ChatInterface
               initialData={activeChat ? activeChat.data : null}

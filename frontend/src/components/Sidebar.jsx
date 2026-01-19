@@ -9,7 +9,8 @@ export default function Sidebar({
     isOpen,
     toggleSidebar,
     onDeleteChat,
-    user
+    user,
+    onLogout
 }) {
     return (
         <aside className={`sidebar ${isOpen ? "open" : "collapsed"}`}>
@@ -84,6 +85,7 @@ export default function Sidebar({
                                         <Link to="/pricing" className="upgrade-link">Upgrade</Link>
                                     )}
                                 </span>
+                                <button onClick={onLogout} className="logout-btn">Log out</button>
                             </div>
                         )}
                     </>
