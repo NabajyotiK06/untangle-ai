@@ -3,8 +3,6 @@
 **Turn messy thoughts into clear meaning.**
 Untangle AI is an emotional clarity assistant that helps you rewrite anxiety-filled texts, clarify spiraling thoughts, and gain philosophical perspective.
 
-![UI Preview](https://via.placeholder.com/800x400?text=Untangle+AI+Interface)
-
 ## ✨ Features
 
 ### 1. 💬 Message Builder
