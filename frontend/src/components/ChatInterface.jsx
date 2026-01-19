@@ -1,28 +1,63 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { generateAI } from "../api";
 
-export default function ChatInterface() {
+export default function ChatInterface({ initialData, onUpdate }) {
     const [activeMode, setActiveMode] = useState("message"); // 'message' | 'clarifier'
     const [input, setInput] = useState("");
     const [output, setOutput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    // Load initial data when switching chats
+    useEffect(() => {
+        if (initialData) {
+            setActiveMode(initialData.activeMode || "message");
+            setInput(initialData.input || "");
+            setOutput(initialData.output || "");
+            setError(initialData.error || "");
+        } else {
+            // Reset if no data (e.g. new chat)
+            setActiveMode("message");
+            setInput("");
+            setOutput("");
+            setError("");
+        }
+    }, [initialData]);
+
+    const handleUpdate = (updates) => {
+        if (onUpdate) {
+            onUpdate({
+                activeMode,
+                input,
+                output,
+                error,
+                ...updates
+            });
+        }
+    };
+
     const handleGenerate = async () => {
         if (!input) return;
         setLoading(true);
-        setError(""); // Clear previous errors
-        setOutput(""); // Clear previous output
+        setError("");
+        setOutput("");
+
         try {
             const data = await generateAI(activeMode, input);
             if (data.error) {
-                setError("⚠️ " + (data.error.includes("429") ? "Traffic is high (Rate Limit). Please wait a moment." : "Something went wrong."));
+                const errorMessage = "⚠️ " + (data.error.includes("429") ? "Traffic is high (Rate Limit). Please wait a moment." : "Something went wrong.");
+                setError(errorMessage);
+                handleUpdate({ error: errorMessage, input });
             } else {
                 setOutput(data.result);
+                // Save successful interaction
+                handleUpdate({ output: data.result, input });
             }
         } catch (e) {
             console.error(e);
-            setError("Failed to connect to the server.");
+            const errorMsg = "Failed to connect to the server.";
+            setError(errorMsg);
+            handleUpdate({ error: errorMsg, input });
         }
         setLoading(false);
     };
@@ -31,13 +66,20 @@ export default function ChatInterface() {
         setInput(text);
     };
 
+    // Also update parent when mode changes, so empty state is saved correctly if needed
+    // or just let the next interaction save it.
+    // For now, let's only save on generation to avoid empty "new chat" spam in history
+    // unless user explicitly types.
+
     return (
         <main className="chat-interface">
-            <div className="hero-section">
-                <span className="tagline-pill">✨ AI-powered emotional clarity</span>
-                <h1>Turn messy thoughts into <br /><em>clear meaning</em></h1>
-                <p>When your mind is tangled and words won't come, let AI help you find clarity. Express what you truly mean—with intention and grace.</p>
-            </div>
+            {!output && !input && (
+                <div className="hero-section">
+                    <span className="tagline-pill">✨ AI-powered emotional clarity</span>
+                    <h1>Turn messy thoughts into <br /><em>clear meaning</em></h1>
+                    <p>When your mind is tangled and words won't come, let AI help you find clarity. Express what you truly mean—with intention and grace.</p>
+                </div>
+            )}
 
             <div className="path-selector">
                 <div
@@ -94,31 +136,33 @@ export default function ChatInterface() {
                     )}
                 </div>
 
-                <div className="quick-starters">
-                    <span className="input-label" style={{ marginBottom: 0, marginRight: '1rem', alignSelf: 'center' }}>Quick starters:</span>
-                    {activeMode === 'message' && (
-                        <>
-                            <button className="starter-chip" onClick={() => setStarter("Text her without sounding desperate")}>Text without sounding desperate</button>
-                            <button className="starter-chip" onClick={() => setStarter("Apologize maturely")}>Apologize maturely</button>
-                            <button className="starter-chip" onClick={() => setStarter("Confess feelings gently")}>Confess feelings gently</button>
-                            <button className="starter-chip" onClick={() => setStarter("Set a boundary kindly")}>Set a boundary</button>
-                        </>
-                    )}
-                    {activeMode === 'clarifier' && (
-                        <>
-                            <button className="starter-chip" onClick={() => setStarter("I feel like everyone is ignoring me")}>Ignoring me</button>
-                            <button className="starter-chip" onClick={() => setStarter("I'm anxious about my future career")}>Career anxiety</button>
-                            <button className="starter-chip" onClick={() => setStarter("He hasn't texted back in 3 hours")}>No text back</button>
-                        </>
-                    )}
-                    {activeMode === 'philosophy' && (
-                        <>
-                            <button className="starter-chip" onClick={() => setStarter("Why does this rejection hurt so much?")}>Why does it hurt?</button>
-                            <button className="starter-chip" onClick={() => setStarter("I feel overwhelmed by everything")}>I feel overwhelmed</button>
-                            <button className="starter-chip" onClick={() => setStarter("What is the point of my struggle?")}>Meaning of struggle</button>
-                        </>
-                    )}
-                </div>
+                {!output && (
+                    <div className="quick-starters">
+                        <span className="input-label" style={{ marginBottom: 0, marginRight: '1rem', alignSelf: 'center' }}>Quick starters:</span>
+                        {activeMode === 'message' && (
+                            <>
+                                <button className="starter-chip" onClick={() => setStarter("Text her without sounding desperate")}>Text without sounding desperate</button>
+                                <button className="starter-chip" onClick={() => setStarter("Apologize maturely")}>Apologize maturely</button>
+                                <button className="starter-chip" onClick={() => setStarter("Confess feelings gently")}>Confess feelings gently</button>
+                                <button className="starter-chip" onClick={() => setStarter("Set a boundary kindly")}>Set a boundary</button>
+                            </>
+                        )}
+                        {activeMode === 'clarifier' && (
+                            <>
+                                <button className="starter-chip" onClick={() => setStarter("I feel like everyone is ignoring me")}>Ignoring me</button>
+                                <button className="starter-chip" onClick={() => setStarter("I'm anxious about my future career")}>Career anxiety</button>
+                                <button className="starter-chip" onClick={() => setStarter("He hasn't texted back in 3 hours")}>No text back</button>
+                            </>
+                        )}
+                        {activeMode === 'philosophy' && (
+                            <>
+                                <button className="starter-chip" onClick={() => setStarter("Why does this rejection hurt so much?")}>Why does it hurt?</button>
+                                <button className="starter-chip" onClick={() => setStarter("I feel overwhelmed by everything")}>I feel overwhelmed</button>
+                                <button className="starter-chip" onClick={() => setStarter("What is the point of my struggle?")}>Meaning of struggle</button>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 <label className="input-label">Describe your situation</label>
                 <textarea
